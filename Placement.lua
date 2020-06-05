@@ -1,5 +1,6 @@
 -- getting essential services
 -- all code will be put into a github repository
+-- Dollor-Lua/MH-Game-Stream/edit/master/Placement.lua
 
 local rs = game:GetService("RunService")
 local ts = game:GetService("TweenService")
