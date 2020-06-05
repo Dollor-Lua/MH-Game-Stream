@@ -27,9 +27,11 @@ function detect_collisions()
 		
 		local parts = p:GetTouchingParts()
 		
+		canPlace = true
+		
 		for i,v in pairs(parts) do
 			if v:FindFirstAncestor("Placed") then -- checks if the object has a great, great etc parent with the name.
-				
+				canPlace = false
 			end
 		end
 	end
@@ -40,6 +42,7 @@ function movement()
 	local size, orientation = object:GetBoundingBox()
 	pos = pos + Vector3.new(0, size.Y/2, 0)
 	object:SetPrimaryPartCFrame(CFrame.new(pos) * CFrame.Angles(0, script.rot.Value, 0))
+	detect_collisions()
 end
 
 function place()
