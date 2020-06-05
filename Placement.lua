@@ -39,15 +39,25 @@ end
 
 function movement()
 	local pos = mouse.hit.p;
-	local size, orientation = object:GetBoundingBox()
-	pos = pos + Vector3.new(0, size.Y/2, 0)
+	local size = object.PrimaryPart.Size;
+	local base = plr.Base.Value.Base
+	pos = Vector3.new(pos.X, (base.Position.Y+0.5)+size.Y/2, pos.Z)
+	
+	local x = math.floor((pos.X/1)+0.5)
+	local z = math.floor((pos.Z/1)+0.5)
+	
+	x = math.clamp(x, (base.Position.X-(base.Size.X/2))+(size.X/2), (base.Position.X+(base.Size.X/2))-(size.X/2))
+	z = math.clamp(z, (base.Position.Z-(base.Size.Z/2))+(size.Z/2), (base.Position.Z+(base.Size.Z/2))-(size.Z/2))
+	
+	pos = Vector3.new(x, pos.Y, z);
+	
 	object:SetPrimaryPartCFrame(CFrame.new(pos) * CFrame.Angles(0, script.rot.Value, 0))
 	detect_collisions()
 end
 
 function place()
 	if object and isPlacing and canPlace then
-		-- fire a remote event to place on the server
+		game.ReplicatedStorage.Events.PlaceBlock:FireServer(object:GetPrimaryPartCFrame().p, rotation, object.Name)
 	end
 end
 
@@ -60,6 +70,25 @@ function rotate()
 	ts:Create(script.rot, TweenInfo.new(1, Enum.EasingStyle.Linear), { Value = rotation }):Play()
 end
 
+function startPlacement(n)
+	object = game.ReplicatedStorage.Objects[n]:Clone()
+	object.Parent = workspace
+	
+	for i,v in pairs(object:GetDescendants()) do
+		v.CanCollide = false
+	end
+	
+	isPlacing = true
+	startPlacing = false
+	canPlace = true
+	
+	script.Parent.PlacementMain.Visible = true
+	
+	-- disable inventory
+	-- disable shop
+	-- disable settings
+end
+
 -- secondary functions
 
 uis.InputBegan:Connect(function(inp, proc)
@@ -68,23 +97,36 @@ uis.InputBegan:Connect(function(inp, proc)
 			if isPlacing then
 				place()
 			end
-		elseif inp.KeyCode == Enum.KeyCode.R then
+		elseif inp.KeyCode == Enum.KeyCode.Z then
 			-- disable placement gui
 			-- enable inventory gui
 		elseif inp.KeyCode == Enum.KeyCode.F then
 			-- fire a remote event to undo the place
 		elseif inp.KeyCode == Enum.KeyCode.Q then
+			object:Destroy()
+			
 			object = nil
 			isPlacing = false
 			canPlace = true
 			startPlacing = true
 			script.Parent.PlacementMain.Visible = false
+		elseif inp.KeyCode == Enum.KeyCode.R then
+			if isPlacing then
+				rotate()
+			end
 		end
 	end
 end)
 
+script.Parent.TestButton.MouseButton1Click:Connect(function()
+	if not isPlacing and startPlacing then
+		startPlacement("TestBlock")
+	end
+end)
+
 rs.RenderStepped:Connect(function(step)
-	if isPlacing then
+	if isPlacing and object then
+		mouse.TargetFilter = object
 		movement()
 	end
 end)
